@@ -1,15 +1,20 @@
 # 安装依赖 pip3 install requests html5lib bs4 schedule
 
 import time
+from datetime import datetime
+
 import requests
 import json
 import schedule
+import holidays
 from bs4 import BeautifulSoup
 
 
 # 从测试号信息获取
 appID = ""
 appSecret = ""
+loverVXId = ""
+meVXId = ""
 #收信人ID即 用户列表中的微信号，见上文
 openId = ""
 # 天气预报模板ID
@@ -84,7 +89,7 @@ def get_daily_love():
     return daily_love
 
 
-def send_weather(access_token, weather):
+def send_weather(access_token, weather, openId):
     # touser 就是 openID
     # template_id 就是模板ID
     # url 就是点击模板跳转的url
@@ -123,7 +128,7 @@ def send_weather(access_token, weather):
     print(requests.post(url, json.dumps(body)).text)
 
 
-def send_timetable(access_token, message):
+def send_timetable(access_token, message,openId):
     body = {
         "touser": openId,
         "template_id": timetable_template_id.strip(),
@@ -138,29 +143,42 @@ def send_timetable(access_token, message):
     print(requests.post(url, json.dumps(body)).text)
 
 
-def weather_report(city):
+def weather_report(city, openId):
     # 1.获取access_token
     access_token = get_access_token()
     # 2. 获取天气
     weather = get_weather(city)
     print(f"天气信息： {weather}")
     # 3. 发送消息
-    send_weather(access_token, weather)
+    send_weather(access_token, weather, openId)
 
 
-def timetable(message):
-    # 1.获取access_token
-    access_token = get_access_token()
-    # 3. 发送消息
-    send_timetable(access_token, message)
+def timetable(message, openid):
+    if isWorkday():
+        # 1.获取access_token
+        access_token = get_access_token()
+        # 3. 发送消息
+        send_timetable(access_token, message, openid)
+
+def isWorkday():
+    today = datetime.today()
+    # 获取当前年的节假日表
+    holiday = holidays.country_holidays("CN",None,today.year)
+    # 判断是否为工作日
+    return holiday.is_workday(today)
+
 
 
 if __name__ == '__main__':
-    weather_report("青岛")
-    # timetable("第二教学楼十分钟后开始英语课")
+    # weather_report("长沙")
+    # timetable("大王叫我来巡山！")
 
-    # schedule.every().day.at("18:30").do(weather_report, "南京")
-    # schedule.every().monday.at("13:50").do(timetable, "第二教学楼十分钟后开始英语课")
-    #while True:
-    #    schedule.run_pending()
-    #    time.sleep(1)
+    schedule.every().day.at("09:10").do(timetable, "记得打卡！！！", meVXId)
+    schedule.every().day.at("18:20").do(timetable, "记得打卡！！！", meVXId)
+    schedule.every().day.at("09:00").do(weather_report, "长沙", meVXId)
+
+    schedule.every().day.at("09:30").do(weather_report, "长沙", loverVXId)
+
+    while True:
+       schedule.run_pending()
+       time.sleep(1)
