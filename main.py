@@ -171,7 +171,7 @@ def isWorkday():
 
 if __name__ == '__main__':
     # weather_report("长沙")
-    # timetable("大王叫我来巡山！")
+    timetable("启动成功！", meVXId)
 
     schedule.every().day.at("09:10").do(timetable, "记得打卡！！！", meVXId)
     schedule.every().day.at("18:20").do(timetable, "记得打卡！！！", meVXId)
